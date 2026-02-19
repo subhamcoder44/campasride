@@ -22,13 +22,13 @@ const Stack = createNativeStackNavigator();
 function App() {
   return (
     <SafeAreaProvider>
-      <StatusBar barStyle="light-content" backgroundColor="#0d1117" />
+      <StatusBar barStyle="light-content" backgroundColor="#080C14" />
       <NavigationContainer>
         <Stack.Navigator
           initialRouteName="Onboarding"
           screenOptions={{
             headerShown: false,
-            contentStyle: { backgroundColor: '#0d1117' },
+            contentStyle: { backgroundColor: '#080C14' },
             animation: 'slide_from_right',
           }}>
           {/* Auth Flow */}

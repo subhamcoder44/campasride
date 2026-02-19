@@ -1,6 +1,6 @@
-import React from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
-import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../theme';
+import React, { useRef } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, Animated } from 'react-native';
+import { Colors, FontSize, FontWeight, Spacing, BorderRadius, Shadows } from '../theme';
 
 interface RideCardProps {
     driverName: string;
@@ -29,57 +29,112 @@ export default function RideCard({
     rating,
     onPress,
 }: RideCardProps) {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 0.97,
+            useNativeDriver: true,
+            speed: 50,
+            bounciness: 4,
+        }).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            speed: 20,
+            bounciness: 8,
+        }).start();
+    };
+
     return (
-        <TouchableOpacity style={styles.card} onPress={onPress} activeOpacity={0.85}>
-            <View style={styles.header}>
-                <View style={styles.driverInfo}>
-                    <View style={styles.avatar}>
-                        <Text style={styles.avatarText}>{driverName[0]}</Text>
+        <Animated.View style={[{ transform: [{ scale: scaleAnim }] }]}>
+            <TouchableOpacity
+                style={styles.card}
+                onPress={onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                activeOpacity={1}>
+                {/* Top shine */}
+                <View style={styles.shine} />
+
+                <View style={styles.header}>
+                    <View style={styles.driverInfo}>
+                        <View style={styles.avatarContainer}>
+                            <View style={styles.avatar}>
+                                <Text style={styles.avatarText}>{driverName[0]}</Text>
+                            </View>
+                            <View style={styles.avatarGlow} />
+                        </View>
+                        <View>
+                            <Text style={styles.driverName}>{driverName}</Text>
+                            <Text style={styles.carInfo}>
+                                {carModel}{carColor ? ` • ${carColor}` : ''}
+                            </Text>
+                        </View>
                     </View>
-                    <View>
-                        <Text style={styles.driverName}>{driverName}</Text>
-                        <Text style={styles.carInfo}>
-                            {carModel}{carColor ? ` - ${carColor}` : ''}
+                    <View style={styles.priceContainer}>
+                        <Text style={styles.priceETH}>{priceETH}</Text>
+                        <Text style={styles.priceUSD}>~{priceUSD}</Text>
+                    </View>
+                </View>
+
+                <View style={styles.routeContainer}>
+                    <View style={styles.routeLine}>
+                        <View style={styles.dotGreen}>
+                            <View style={styles.dotGreenInner} />
+                        </View>
+                        <View style={styles.dashedLine} />
+                        <View style={styles.dotRed}>
+                            <View style={styles.dotRedInner} />
+                        </View>
+                    </View>
+                    <View style={styles.routeInfo}>
+                        <Text style={styles.locationText}>{pickup}</Text>
+                        <Text style={styles.locationText}>{dropoff}</Text>
+                    </View>
+                </View>
+
+                <View style={styles.footer}>
+                    <View style={styles.footerChip}>
+                        <Text style={styles.footerChipText}>🕐 {departureTime}</Text>
+                    </View>
+                    {rating !== undefined && (
+                        <View style={styles.footerChip}>
+                            <Text style={styles.footerChipText}>⭐ {rating.toFixed(1)}</Text>
+                        </View>
+                    )}
+                    <View style={[styles.footerChip, seatsAvailable <= 1 && styles.footerChipUrgent]}>
+                        <Text style={[styles.footerChipText, seatsAvailable <= 1 && styles.footerChipTextUrgent]}>
+                            💺 {seatsAvailable} seat{seatsAvailable !== 1 ? 's' : ''}
                         </Text>
                     </View>
                 </View>
-                <View style={styles.priceContainer}>
-                    <Text style={styles.priceETH}>{priceETH}</Text>
-                    <Text style={styles.priceUSD}>~{priceUSD}</Text>
-                </View>
-            </View>
-
-            <View style={styles.routeContainer}>
-                <View style={styles.routeLine}>
-                    <View style={styles.dotGreen} />
-                    <View style={styles.dashedLine} />
-                    <View style={styles.dotRed} />
-                </View>
-                <View style={styles.routeInfo}>
-                    <Text style={styles.locationText}>{pickup}</Text>
-                    <Text style={styles.locationText}>{dropoff}</Text>
-                </View>
-            </View>
-
-            <View style={styles.footer}>
-                <Text style={styles.timeText}>🕐 {departureTime}</Text>
-                {rating !== undefined && (
-                    <Text style={styles.ratingText}>⭐ {rating.toFixed(1)}</Text>
-                )}
-                <Text style={styles.seatsText}>💺 {seatsAvailable} seats</Text>
-            </View>
-        </TouchableOpacity>
+            </TouchableOpacity>
+        </Animated.View>
     );
 }
 
 const styles = StyleSheet.create({
     card: {
         backgroundColor: Colors.surface,
-        borderRadius: BorderRadius.lg,
-        padding: Spacing.lg,
-        marginBottom: Spacing.md,
+        borderRadius: BorderRadius.xl,
+        padding: Spacing.lg + 2,
+        marginBottom: Spacing.md + 2,
         borderWidth: 1,
-        borderColor: Colors.borderLight,
+        borderColor: Colors.border,
+        overflow: 'hidden',
+        ...Shadows.sm,
+    },
+    shine: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.06)',
     },
     header: {
         flexDirection: 'row',
@@ -92,13 +147,25 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: Spacing.md,
     },
+    avatarContainer: {
+        position: 'relative',
+    },
     avatar: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 42,
+        height: 42,
+        borderRadius: 21,
         backgroundColor: Colors.accent,
         alignItems: 'center',
         justifyContent: 'center',
+    },
+    avatarGlow: {
+        position: 'absolute',
+        top: -3,
+        left: -3,
+        right: -3,
+        bottom: -3,
+        borderRadius: 24,
+        backgroundColor: Colors.accentGlow,
     },
     avatarText: {
         color: Colors.white,
@@ -117,6 +184,10 @@ const styles = StyleSheet.create({
     },
     priceContainer: {
         alignItems: 'flex-end',
+        backgroundColor: Colors.surfaceLight,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.md,
     },
     priceETH: {
         color: Colors.accent,
@@ -124,7 +195,7 @@ const styles = StyleSheet.create({
         fontWeight: FontWeight.bold,
     },
     priceUSD: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.xs,
         marginTop: 2,
     },
@@ -134,15 +205,23 @@ const styles = StyleSheet.create({
         paddingVertical: Spacing.sm,
     },
     routeLine: {
-        width: 20,
+        width: 22,
         alignItems: 'center',
         justifyContent: 'space-between',
         paddingVertical: 2,
     },
     dotGreen: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
+        width: 14,
+        height: 14,
+        borderRadius: 7,
+        backgroundColor: Colors.successLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dotGreenInner: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
         backgroundColor: Colors.success,
     },
     dashedLine: {
@@ -150,11 +229,20 @@ const styles = StyleSheet.create({
         flex: 1,
         marginVertical: 4,
         backgroundColor: Colors.border,
+        borderRadius: 1,
     },
     dotRed: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
+        width: 14,
+        height: 14,
+        borderRadius: 7,
+        backgroundColor: Colors.errorLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dotRedInner: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
         backgroundColor: Colors.error,
     },
     routeInfo: {
@@ -165,24 +253,29 @@ const styles = StyleSheet.create({
     locationText: {
         color: Colors.textPrimary,
         fontSize: FontSize.sm,
+        fontWeight: FontWeight.medium,
     },
     footer: {
         flexDirection: 'row',
-        justifyContent: 'space-between',
+        gap: Spacing.sm,
         borderTopWidth: 1,
-        borderTopColor: Colors.borderLight,
+        borderTopColor: Colors.border,
         paddingTop: Spacing.md,
     },
-    timeText: {
-        color: Colors.textSecondary,
-        fontSize: FontSize.sm,
+    footerChip: {
+        backgroundColor: Colors.surfaceHighlight,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs + 2,
+        borderRadius: BorderRadius.full,
     },
-    ratingText: {
-        color: Colors.textSecondary,
-        fontSize: FontSize.sm,
+    footerChipUrgent: {
+        backgroundColor: Colors.errorLight,
     },
-    seatsText: {
+    footerChipText: {
         color: Colors.textSecondary,
-        fontSize: FontSize.sm,
+        fontSize: FontSize.xs,
+    },
+    footerChipTextUrgent: {
+        color: Colors.error,
     },
 });

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -6,8 +6,9 @@ import {
     ScrollView,
     TouchableOpacity,
     StatusBar,
+    Animated,
 } from 'react-native';
-import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
+import { Colors, FontSize, FontWeight, Spacing, BorderRadius, Shadows } from '../../theme';
 import Card from '../../components/Card';
 import BottomTabBar from '../../components/BottomTabBar';
 import Button from '../../components/Button';
@@ -67,6 +68,16 @@ const TABS = [
 
 export default function DriverDashboardScreen({ navigation }: Props) {
     const [activeTab, setActiveTab] = useState('Dashboard');
+    const pulseAnim = useRef(new Animated.Value(1)).current;
+
+    useEffect(() => {
+        Animated.loop(
+            Animated.sequence([
+                Animated.timing(pulseAnim, { toValue: 1.3, duration: 800, useNativeDriver: true }),
+                Animated.timing(pulseAnim, { toValue: 1, duration: 800, useNativeDriver: true }),
+            ]),
+        ).start();
+    }, []);
 
     const handleTabPress = (key: string) => {
         setActiveTab(key);
@@ -81,6 +92,9 @@ export default function DriverDashboardScreen({ navigation }: Props) {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
 
+            {/* Ambient glow */}
+            <View style={styles.glowOrb} />
+
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
@@ -88,35 +102,37 @@ export default function DriverDashboardScreen({ navigation }: Props) {
                 {/* Header */}
                 <View style={styles.header}>
                     <View>
-                        <Text style={styles.greeting}>Good Evening 🌙</Text>
+                        <Text style={styles.greeting}>Driver Mode 🌙</Text>
                         <Text style={styles.headerTitle}>Good Evening, Alex</Text>
                     </View>
                     <TouchableOpacity
                         style={styles.switchButton}
                         onPress={() => navigation.navigate('MainTabs')}>
+                        <Text style={styles.switchIcon}>🔄</Text>
                         <Text style={styles.switchText}>Rider</Text>
                     </TouchableOpacity>
                 </View>
 
                 {/* Earnings Card */}
                 <Card style={styles.earningsCard} variant="accent">
+                    <View style={styles.earningsGlow} />
                     <Text style={styles.earningsLabel}>Weekly Earnings</Text>
                     <Text style={styles.earningsAmount}>$245.50</Text>
                     <View style={styles.earningsStats}>
-                        <View style={styles.earningsStatItem}>
-                            <Text style={styles.earningsStatValue}>12</Text>
-                            <Text style={styles.earningsStatLabel}>Trips</Text>
-                        </View>
-                        <View style={styles.earningsDivider} />
-                        <View style={styles.earningsStatItem}>
-                            <Text style={styles.earningsStatValue}>4.9</Text>
-                            <Text style={styles.earningsStatLabel}>Rating</Text>
-                        </View>
-                        <View style={styles.earningsDivider} />
-                        <View style={styles.earningsStatItem}>
-                            <Text style={styles.earningsStatValue}>18h</Text>
-                            <Text style={styles.earningsStatLabel}>Online</Text>
-                        </View>
+                        {[
+                            { value: '12', label: 'Trips', icon: '🚗' },
+                            { value: '4.9', label: 'Rating', icon: '⭐' },
+                            { value: '18h', label: 'Online', icon: '⏱️' },
+                        ].map((stat, idx) => (
+                            <React.Fragment key={idx}>
+                                {idx > 0 && <View style={styles.earningsDivider} />}
+                                <View style={styles.earningsStatItem}>
+                                    <Text style={styles.earningsStatIcon}>{stat.icon}</Text>
+                                    <Text style={styles.earningsStatValue}>{stat.value}</Text>
+                                    <Text style={styles.earningsStatLabel}>{stat.label}</Text>
+                                </View>
+                            </React.Fragment>
+                        ))}
                     </View>
                 </Card>
 
@@ -124,16 +140,20 @@ export default function DriverDashboardScreen({ navigation }: Props) {
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Live Requests</Text>
                     <View style={styles.liveBadge}>
+                        <Animated.View style={[styles.livePulse, { transform: [{ scale: pulseAnim }] }]} />
                         <View style={styles.liveDot} />
                         <Text style={styles.liveText}>{LIVE_REQUESTS.length} new</Text>
                     </View>
                 </View>
 
-                {LIVE_REQUESTS.map((request) => (
-                    <Card key={request.id} style={styles.requestCard}>
+                {LIVE_REQUESTS.map((request, idx) => (
+                    <Card key={request.id} style={styles.requestCard} delay={idx * 100}>
                         <View style={styles.requestHeader}>
-                            <View style={styles.requestAvatar}>
-                                <Text style={styles.requestAvatarText}>{request.initial}</Text>
+                            <View style={styles.requestAvatarContainer}>
+                                <View style={styles.requestAvatarGlow} />
+                                <View style={styles.requestAvatar}>
+                                    <Text style={styles.requestAvatarText}>{request.initial}</Text>
+                                </View>
                             </View>
                             <View style={styles.requestInfo}>
                                 <Text style={styles.requestName}>{request.name}</Text>
@@ -146,14 +166,18 @@ export default function DriverDashboardScreen({ navigation }: Props) {
 
                         <View style={styles.requestRoute}>
                             <View style={styles.routeItem}>
-                                <View style={styles.dotGreen} />
+                                <View style={styles.dotGreen}>
+                                    <View style={styles.dotGreenInner} />
+                                </View>
                                 <View>
                                     <Text style={styles.routeLocation}>{request.pickup}</Text>
                                     <Text style={styles.routeDistance}>{request.pickupDistance}</Text>
                                 </View>
                             </View>
                             <View style={styles.routeItem}>
-                                <View style={styles.dotRed} />
+                                <View style={styles.dotRed}>
+                                    <View style={styles.dotRedInner} />
+                                </View>
                                 <View>
                                     <Text style={styles.routeLocation}>{request.destination}</Text>
                                     <Text style={styles.routeDistance}>{request.totalDistance}</Text>
@@ -184,16 +208,19 @@ export default function DriverDashboardScreen({ navigation }: Props) {
                     <Text style={styles.sectionTitle}>Upcoming Schedule</Text>
                 </View>
 
-                {SCHEDULE.map((item) => (
-                    <Card key={item.id} style={styles.scheduleCard}>
+                {SCHEDULE.map((item, idx) => (
+                    <Card key={item.id} style={styles.scheduleCard} delay={200 + idx * 100}>
                         <View style={styles.scheduleRow}>
-                            <Text style={styles.scheduleIcon}>{item.icon}</Text>
+                            <View style={styles.scheduleIconContainer}>
+                                <Text style={styles.scheduleIcon}>{item.icon}</Text>
+                            </View>
                             <View style={styles.scheduleInfo}>
                                 <Text style={styles.scheduleTitle}>{item.title}</Text>
                                 <Text style={styles.scheduleMeta}>
                                     {item.time} • {item.detail}
                                 </Text>
                             </View>
+                            <Text style={styles.scheduleChevron}>›</Text>
                         </View>
                     </Card>
                 ))}
@@ -208,6 +235,16 @@ const styles = StyleSheet.create({
     container: {
         flex: 1,
         backgroundColor: Colors.background,
+    },
+    glowOrb: {
+        position: 'absolute',
+        top: -50,
+        left: -50,
+        width: 250,
+        height: 250,
+        borderRadius: 125,
+        backgroundColor: Colors.accent,
+        opacity: 0.05,
     },
     scrollView: {
         flex: 1,
@@ -224,22 +261,29 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.xxl,
     },
     greeting: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.sm,
         marginBottom: 4,
     },
     headerTitle: {
         color: Colors.textPrimary,
         fontSize: FontSize.xxl,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
+        letterSpacing: -0.5,
     },
     switchButton: {
+        flexDirection: 'row',
+        alignItems: 'center',
         backgroundColor: Colors.surfaceLight,
         paddingHorizontal: Spacing.lg,
-        paddingVertical: Spacing.sm,
+        paddingVertical: Spacing.sm + 2,
         borderRadius: BorderRadius.full,
         borderWidth: 1,
         borderColor: Colors.border,
+        gap: Spacing.xs,
+    },
+    switchIcon: {
+        fontSize: 14,
     },
     switchText: {
         color: Colors.accent,
@@ -249,16 +293,29 @@ const styles = StyleSheet.create({
     earningsCard: {
         marginBottom: Spacing.xxl,
         alignItems: 'center',
+        overflow: 'hidden',
+    },
+    earningsGlow: {
+        position: 'absolute',
+        top: -30,
+        right: -30,
+        width: 120,
+        height: 120,
+        borderRadius: 60,
+        backgroundColor: Colors.accent,
+        opacity: 0.08,
     },
     earningsLabel: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.sm,
+        letterSpacing: 0.5,
     },
     earningsAmount: {
         color: Colors.textPrimary,
         fontSize: FontSize.hero,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
         marginTop: Spacing.sm,
+        letterSpacing: -1,
     },
     earningsStats: {
         flexDirection: 'row',
@@ -273,19 +330,23 @@ const styles = StyleSheet.create({
         flex: 1,
         alignItems: 'center',
     },
+    earningsStatIcon: {
+        fontSize: 16,
+        marginBottom: 4,
+    },
     earningsStatValue: {
         color: Colors.textPrimary,
         fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
     },
     earningsStatLabel: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.xs,
         marginTop: 4,
     },
     earningsDivider: {
         width: 1,
-        height: 32,
+        height: 36,
         backgroundColor: Colors.border,
     },
     sectionHeader: {
@@ -296,7 +357,7 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         color: Colors.textPrimary,
-        fontSize: FontSize.lg,
+        fontSize: FontSize.xl,
         fontWeight: FontWeight.bold,
     },
     liveBadge: {
@@ -304,9 +365,18 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: Spacing.sm,
         backgroundColor: Colors.errorLight,
-        paddingHorizontal: Spacing.md,
-        paddingVertical: 4,
+        paddingHorizontal: Spacing.md + 2,
+        paddingVertical: Spacing.xs + 2,
         borderRadius: BorderRadius.full,
+        position: 'relative',
+    },
+    livePulse: {
+        position: 'absolute',
+        left: Spacing.md + 2,
+        width: 8,
+        height: 8,
+        borderRadius: 4,
+        backgroundColor: Colors.errorGlow,
     },
     liveDot: {
         width: 8,
@@ -317,7 +387,7 @@ const styles = StyleSheet.create({
     liveText: {
         color: Colors.error,
         fontSize: FontSize.xs,
-        fontWeight: FontWeight.semibold,
+        fontWeight: FontWeight.bold,
     },
     requestCard: {
         marginBottom: Spacing.md,
@@ -327,6 +397,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing.lg,
     },
+    requestAvatarContainer: {
+        position: 'relative',
+        marginRight: Spacing.md,
+    },
+    requestAvatarGlow: {
+        position: 'absolute',
+        top: -4,
+        left: -4,
+        right: -4,
+        bottom: -4,
+        borderRadius: 26,
+        backgroundColor: Colors.accentGlow,
+    },
     requestAvatar: {
         width: 44,
         height: 44,
@@ -334,7 +417,6 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.accent,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.md,
     },
     requestAvatarText: {
         color: Colors.white,
@@ -358,7 +440,7 @@ const styles = StyleSheet.create({
     requestETH: {
         color: Colors.accent,
         fontSize: FontSize.sm,
-        fontWeight: FontWeight.semibold,
+        fontWeight: FontWeight.bold,
     },
     requestUSD: {
         color: Colors.textMuted,
@@ -374,30 +456,48 @@ const styles = StyleSheet.create({
         gap: Spacing.md,
     },
     dotGreen: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
+        width: 14,
+        height: 14,
+        borderRadius: 7,
+        backgroundColor: Colors.successLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dotGreenInner: {
+        width: 7,
+        height: 7,
+        borderRadius: 3.5,
         backgroundColor: Colors.success,
     },
     dotRed: {
-        width: 10,
-        height: 10,
-        borderRadius: 5,
+        width: 14,
+        height: 14,
+        borderRadius: 7,
+        backgroundColor: Colors.errorLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dotRedInner: {
+        width: 7,
+        height: 7,
+        borderRadius: 3.5,
         backgroundColor: Colors.error,
     },
     routeLocation: {
         color: Colors.textPrimary,
         fontSize: FontSize.sm,
+        fontWeight: FontWeight.medium,
     },
     routeDistance: {
         color: Colors.textMuted,
         fontSize: FontSize.xs,
+        marginTop: 1,
     },
     requestActions: {
         flexDirection: 'row',
         gap: Spacing.md,
         borderTopWidth: 1,
-        borderTopColor: Colors.borderLight,
+        borderTopColor: Colors.border,
         paddingTop: Spacing.md,
     },
     declineBtn: {
@@ -414,8 +514,16 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         gap: Spacing.md,
     },
+    scheduleIconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: BorderRadius.lg,
+        backgroundColor: Colors.surfaceHighlight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     scheduleIcon: {
-        fontSize: 28,
+        fontSize: 24,
     },
     scheduleInfo: {
         flex: 1,
@@ -429,5 +537,10 @@ const styles = StyleSheet.create({
         color: Colors.textSecondary,
         fontSize: FontSize.sm,
         marginTop: 4,
+    },
+    scheduleChevron: {
+        color: Colors.textMuted,
+        fontSize: 24,
+        fontWeight: FontWeight.bold,
     },
 });

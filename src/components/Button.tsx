@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef } from 'react';
 import {
     TouchableOpacity,
     Text,
@@ -6,8 +6,10 @@ import {
     ViewStyle,
     TextStyle,
     ActivityIndicator,
+    Animated,
+    View,
 } from 'react-native';
-import { Colors, BorderRadius, FontSize, FontWeight, Spacing } from '../theme';
+import { Colors, BorderRadius, FontSize, FontWeight, Spacing, Shadows } from '../theme';
 
 interface ButtonProps {
     title: string;
@@ -32,6 +34,26 @@ export default function Button({
     textStyle,
     icon,
 }: ButtonProps) {
+    const scaleAnim = useRef(new Animated.Value(1)).current;
+
+    const handlePressIn = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 0.96,
+            useNativeDriver: true,
+            speed: 50,
+            bounciness: 4,
+        }).start();
+    };
+
+    const handlePressOut = () => {
+        Animated.spring(scaleAnim, {
+            toValue: 1,
+            useNativeDriver: true,
+            speed: 20,
+            bounciness: 8,
+        }).start();
+    };
+
     const buttonStyles = [
         styles.base,
         styles[variant],
@@ -49,23 +71,30 @@ export default function Button({
     ];
 
     return (
-        <TouchableOpacity
-            style={buttonStyles}
-            onPress={onPress}
-            disabled={disabled || loading}
-            activeOpacity={0.8}>
-            {loading ? (
-                <ActivityIndicator
-                    color={variant === 'primary' ? Colors.white : Colors.accent}
-                    size="small"
-                />
-            ) : (
-                <>
-                    {icon && <Text style={[styles.icon, styles[`label_${variant}`]]}>{icon} </Text>}
-                    <Text style={labelStyles}>{title}</Text>
-                </>
-            )}
-        </TouchableOpacity>
+        <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, variant === 'primary' && styles.primaryGlow]}>
+            <TouchableOpacity
+                style={buttonStyles}
+                onPress={onPress}
+                onPressIn={handlePressIn}
+                onPressOut={handlePressOut}
+                disabled={disabled || loading}
+                activeOpacity={1}>
+                {variant === 'primary' && (
+                    <View style={styles.primaryShine} />
+                )}
+                {loading ? (
+                    <ActivityIndicator
+                        color={variant === 'primary' ? Colors.white : Colors.accent}
+                        size="small"
+                    />
+                ) : (
+                    <>
+                        {icon && <Text style={[styles.icon, styles[`label_${variant}`]]}>{icon} </Text>}
+                        <Text style={labelStyles}>{title}</Text>
+                    </>
+                )}
+            </TouchableOpacity>
+        </Animated.View>
     );
 }
 
@@ -74,10 +103,25 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'center',
-        borderRadius: BorderRadius.md,
+        borderRadius: BorderRadius.lg,
+        overflow: 'hidden',
     },
     primary: {
         backgroundColor: Colors.accent,
+    },
+    primaryGlow: {
+        ...Shadows.glow,
+        borderRadius: BorderRadius.lg,
+    },
+    primaryShine: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: '50%',
+        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        borderTopLeftRadius: BorderRadius.lg,
+        borderTopRightRadius: BorderRadius.lg,
     },
     secondary: {
         backgroundColor: Colors.surfaceLight,
@@ -90,10 +134,10 @@ const styles = StyleSheet.create({
     danger: {
         backgroundColor: Colors.errorLight,
         borderWidth: 1,
-        borderColor: Colors.error,
+        borderColor: 'rgba(248, 113, 113, 0.3)',
     },
     size_sm: {
-        paddingVertical: Spacing.sm,
+        paddingVertical: Spacing.sm + 2,
         paddingHorizontal: Spacing.lg,
     },
     size_md: {
@@ -101,14 +145,15 @@ const styles = StyleSheet.create({
         paddingHorizontal: Spacing.xl,
     },
     size_lg: {
-        paddingVertical: Spacing.lg,
+        paddingVertical: Spacing.lg + 2,
         paddingHorizontal: Spacing.xxl,
     },
     disabled: {
-        opacity: 0.5,
+        opacity: 0.4,
     },
     label: {
         fontWeight: FontWeight.semibold,
+        letterSpacing: 0.3,
     },
     label_primary: {
         color: Colors.white,

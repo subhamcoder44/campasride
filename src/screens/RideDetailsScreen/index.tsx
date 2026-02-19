@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
     StatusBar,
 } from 'react-native';
-import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
+import { Colors, FontSize, FontWeight, Spacing, BorderRadius, Shadows } from '../../theme';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 
@@ -22,6 +22,9 @@ export default function RideDetailsScreen({ navigation }: Props) {
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+
+            {/* Ambient glow */}
+            <View style={styles.glowOrb} />
 
             <ScrollView
                 style={styles.scrollView}
@@ -41,14 +44,17 @@ export default function RideDetailsScreen({ navigation }: Props) {
                 </View>
 
                 {/* Driver Info */}
-                <Card style={styles.driverCard}>
+                <Card style={styles.driverCard} variant="accent">
                     <View style={styles.driverRow}>
-                        <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>A</Text>
+                        <View style={styles.avatarContainer}>
+                            <View style={styles.avatarGlow} />
+                            <View style={styles.avatar}>
+                                <Text style={styles.avatarText}>A</Text>
+                            </View>
                         </View>
                         <View style={styles.driverInfo}>
                             <Text style={styles.driverName}>Alex M.</Text>
-                            <Text style={styles.carInfo}>Toyota Prius - Grey</Text>
+                            <Text style={styles.carInfo}>Toyota Prius • Grey</Text>
                         </View>
                         <View style={styles.ratingBadge}>
                             <Text style={styles.ratingStar}>⭐</Text>
@@ -59,59 +65,68 @@ export default function RideDetailsScreen({ navigation }: Props) {
 
                 {/* Route Info */}
                 <Text style={styles.sectionTitle}>Route Info</Text>
-                <Card style={styles.routeCard}>
+                <Card style={styles.routeCard} delay={100}>
                     {/* Pickup */}
                     <View style={styles.routeRow}>
                         <View style={styles.routeIndicator}>
-                            <View style={styles.dotGreen} />
+                            <View style={styles.dotGreen}>
+                                <View style={styles.dotGreenInner} />
+                            </View>
                             <View style={styles.dashedLine} />
                         </View>
                         <View style={styles.routeDetails}>
                             <Text style={styles.routeLabel}>PICKUP</Text>
                             <Text style={styles.routeLocation}>Student Union</Text>
                             <Text style={styles.routeSubtext}>Main Entrance, Gate 2</Text>
-                            <Text style={styles.routeTime}>4:00 PM</Text>
+                            <View style={styles.timeBadge}>
+                                <Text style={styles.timeBadgeText}>🕐 4:00 PM</Text>
+                            </View>
                         </View>
                     </View>
                     {/* Dropoff */}
                     <View style={styles.routeRow}>
                         <View style={styles.routeIndicator}>
-                            <View style={styles.dotRed} />
+                            <View style={styles.dotRed}>
+                                <View style={styles.dotRedInner} />
+                            </View>
                         </View>
                         <View style={styles.routeDetails}>
                             <Text style={styles.routeLabel}>DROPOFF</Text>
                             <Text style={styles.routeLocation}>North Campus Dorms</Text>
                             <Text style={styles.routeSubtext}>Building B Drop-off</Text>
-                            <Text style={styles.routeTime}>4:15 PM</Text>
+                            <View style={styles.timeBadge}>
+                                <Text style={styles.timeBadgeText}>🕐 4:15 PM</Text>
+                            </View>
                         </View>
                     </View>
                 </Card>
 
                 {/* Seat Selection */}
                 <Text style={styles.sectionTitle}>Select Seats</Text>
-                <Card>
+                <Card delay={200}>
                     <View style={styles.seatSelector}>
                         <TouchableOpacity
-                            style={styles.seatButton}
+                            style={[styles.seatButton, seats <= 1 && styles.seatButtonDisabled]}
                             onPress={() => setSeats(Math.max(1, seats - 1))}
                             disabled={seats <= 1}>
-                            <Text style={styles.seatButtonText}>−</Text>
+                            <Text style={[styles.seatButtonText, seats <= 1 && styles.seatButtonTextDisabled]}>−</Text>
                         </TouchableOpacity>
                         <View style={styles.seatCount}>
                             <Text style={styles.seatNumber}>{seats}</Text>
                             <Text style={styles.seatLabel}>seat{seats > 1 ? 's' : ''}</Text>
                         </View>
                         <TouchableOpacity
-                            style={styles.seatButton}
+                            style={[styles.seatButton, seats >= 4 && styles.seatButtonDisabled]}
                             onPress={() => setSeats(Math.min(4, seats + 1))}
                             disabled={seats >= 4}>
-                            <Text style={styles.seatButtonText}>+</Text>
+                            <Text style={[styles.seatButtonText, seats >= 4 && styles.seatButtonTextDisabled]}>+</Text>
                         </TouchableOpacity>
                     </View>
                 </Card>
 
                 {/* Price */}
-                <Card style={styles.priceCard} variant="accent">
+                <Card style={styles.priceCard} variant="accent" delay={300}>
+                    <View style={styles.priceGlow} />
                     <View style={styles.priceRow}>
                         <Text style={styles.priceLabel}>Total Price</Text>
                         <View style={styles.priceValues}>
@@ -120,10 +135,12 @@ export default function RideDetailsScreen({ navigation }: Props) {
                         </View>
                     </View>
                     <View style={styles.infoRow}>
-                        <Text style={styles.infoIcon}>ℹ️</Text>
-                        <Text style={styles.infoText}>
-                            Crypto price is estimated based on current exchange rates.
-                        </Text>
+                        <View style={styles.infoBadge}>
+                            <Text style={styles.infoIcon}>ℹ️</Text>
+                            <Text style={styles.infoText}>
+                                Crypto price is estimated based on current exchange rates.
+                            </Text>
+                        </View>
                     </View>
                 </Card>
             </ScrollView>
@@ -150,6 +167,16 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background,
     },
+    glowOrb: {
+        position: 'absolute',
+        top: -60,
+        left: -40,
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        backgroundColor: Colors.accent,
+        opacity: 0.05,
+    },
     scrollView: {
         flex: 1,
     },
@@ -165,12 +192,14 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.xxl,
     },
     backButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: Colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: Colors.border,
     },
     backIcon: {
         color: Colors.textPrimary,
@@ -178,16 +207,18 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         color: Colors.textPrimary,
-        fontSize: FontSize.lg,
+        fontSize: FontSize.xl,
         fontWeight: FontWeight.bold,
     },
     shareButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: Colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: Colors.border,
     },
     shareIcon: {
         fontSize: 18,
@@ -199,6 +230,19 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         alignItems: 'center',
     },
+    avatarContainer: {
+        position: 'relative',
+        marginRight: Spacing.lg,
+    },
+    avatarGlow: {
+        position: 'absolute',
+        top: -4,
+        left: -4,
+        right: -4,
+        bottom: -4,
+        borderRadius: 28,
+        backgroundColor: Colors.accentGlow,
+    },
     avatar: {
         width: 48,
         height: 48,
@@ -206,7 +250,6 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.accent,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.lg,
     },
     avatarText: {
         color: Colors.white,
@@ -229,7 +272,7 @@ const styles = StyleSheet.create({
     ratingBadge: {
         flexDirection: 'row',
         alignItems: 'center',
-        backgroundColor: Colors.surfaceHighlight,
+        backgroundColor: 'rgba(251, 191, 36, 0.12)',
         paddingHorizontal: Spacing.md,
         paddingVertical: Spacing.sm,
         borderRadius: BorderRadius.full,
@@ -241,11 +284,11 @@ const styles = StyleSheet.create({
     ratingText: {
         color: Colors.textPrimary,
         fontSize: FontSize.sm,
-        fontWeight: FontWeight.semibold,
+        fontWeight: FontWeight.bold,
     },
     sectionTitle: {
         color: Colors.textPrimary,
-        fontSize: FontSize.lg,
+        fontSize: FontSize.xl,
         fontWeight: FontWeight.bold,
         marginBottom: Spacing.md,
     },
@@ -257,26 +300,43 @@ const styles = StyleSheet.create({
         marginBottom: Spacing.lg,
     },
     routeIndicator: {
-        width: 24,
+        width: 26,
         alignItems: 'center',
         marginRight: Spacing.md,
     },
     dotGreen: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: Colors.successLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dotGreenInner: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
         backgroundColor: Colors.success,
     },
     dashedLine: {
         width: 2,
-        height: 40,
+        height: 44,
         backgroundColor: Colors.border,
         marginVertical: 4,
+        borderRadius: 1,
     },
     dotRed: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: Colors.errorLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dotRedInner: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
         backgroundColor: Colors.error,
     },
     routeDetails: {
@@ -286,7 +346,7 @@ const styles = StyleSheet.create({
         color: Colors.textMuted,
         fontSize: FontSize.xs,
         fontWeight: FontWeight.semibold,
-        letterSpacing: 1,
+        letterSpacing: 1.5,
         marginBottom: 4,
     },
     routeLocation: {
@@ -299,11 +359,18 @@ const styles = StyleSheet.create({
         fontSize: FontSize.sm,
         marginTop: 2,
     },
-    routeTime: {
+    timeBadge: {
+        backgroundColor: Colors.surfaceHighlight,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs,
+        borderRadius: BorderRadius.full,
+        alignSelf: 'flex-start',
+        marginTop: Spacing.sm,
+    },
+    timeBadgeText: {
         color: Colors.accent,
-        fontSize: FontSize.sm,
+        fontSize: FontSize.xs,
         fontWeight: FontWeight.medium,
-        marginTop: 4,
     },
     seatSelector: {
         flexDirection: 'row',
@@ -312,34 +379,52 @@ const styles = StyleSheet.create({
         gap: Spacing.xxl,
     },
     seatButton: {
-        width: 44,
-        height: 44,
-        borderRadius: 22,
+        width: 48,
+        height: 48,
+        borderRadius: 24,
         backgroundColor: Colors.surfaceHighlight,
         alignItems: 'center',
         justifyContent: 'center',
-        borderWidth: 1,
+        borderWidth: 1.5,
+        borderColor: Colors.accent,
+    },
+    seatButtonDisabled: {
         borderColor: Colors.border,
+        opacity: 0.4,
     },
     seatButtonText: {
         color: Colors.accent,
         fontSize: FontSize.xxl,
         fontWeight: FontWeight.bold,
     },
+    seatButtonTextDisabled: {
+        color: Colors.textMuted,
+    },
     seatCount: {
         alignItems: 'center',
     },
     seatNumber: {
         color: Colors.textPrimary,
-        fontSize: FontSize.xxxl,
-        fontWeight: FontWeight.bold,
+        fontSize: FontSize.hero,
+        fontWeight: FontWeight.heavy,
     },
     seatLabel: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.sm,
     },
     priceCard: {
         marginTop: Spacing.xxl,
+        overflow: 'hidden',
+    },
+    priceGlow: {
+        position: 'absolute',
+        top: -20,
+        right: -20,
+        width: 100,
+        height: 100,
+        borderRadius: 50,
+        backgroundColor: Colors.accent,
+        opacity: 0.08,
     },
     priceRow: {
         flexDirection: 'row',
@@ -358,7 +443,7 @@ const styles = StyleSheet.create({
     priceETH: {
         color: Colors.accent,
         fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
     },
     priceUSD: {
         color: Colors.textSecondary,
@@ -366,12 +451,17 @@ const styles = StyleSheet.create({
         marginTop: 2,
     },
     infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: Spacing.sm,
         paddingTop: Spacing.md,
         borderTopWidth: 1,
         borderTopColor: Colors.border,
+    },
+    infoBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
+        backgroundColor: Colors.surfaceHighlight,
+        padding: Spacing.md,
+        borderRadius: BorderRadius.md,
     },
     infoIcon: {
         fontSize: 14,
@@ -396,10 +486,10 @@ const styles = StyleSheet.create({
     bottomPriceETH: {
         color: Colors.textPrimary,
         fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
     },
     bottomPriceUSD: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.xs,
     },
     bookButton: {

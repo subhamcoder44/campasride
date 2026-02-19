@@ -7,7 +7,7 @@ import {
     TouchableOpacity,
     StatusBar,
 } from 'react-native';
-import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
+import { Colors, FontSize, FontWeight, Spacing, BorderRadius, Shadows } from '../../theme';
 import Card from '../../components/Card';
 import BottomTabBar from '../../components/BottomTabBar';
 
@@ -63,6 +63,9 @@ export default function ProfileScreen({ navigation }: Props) {
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
 
+            {/* Ambient glow */}
+            <View style={styles.glowOrb} />
+
             <ScrollView
                 style={styles.scrollView}
                 contentContainerStyle={styles.scrollContent}
@@ -76,42 +79,56 @@ export default function ProfileScreen({ navigation }: Props) {
                 </View>
 
                 {/* User Card */}
-                <Card style={styles.userCard}>
+                <Card style={styles.userCard} variant="accent">
                     <View style={styles.avatarRow}>
-                        <View style={styles.avatar}>
-                            <Text style={styles.avatarText}>AC</Text>
+                        <View style={styles.avatarContainer}>
+                            <View style={styles.avatarGlow} />
+                            <View style={styles.avatar}>
+                                <Text style={styles.avatarText}>AC</Text>
+                            </View>
+                            <View style={styles.onlineDot} />
                         </View>
                         <View style={styles.userInfo}>
                             <Text style={styles.userName}>Alex Chen</Text>
-                            <Text style={styles.userUniversity}>MIT • Verified Student ✅</Text>
+                            <View style={styles.verifiedBadge}>
+                                <Text style={styles.verifiedIcon}>✅</Text>
+                                <Text style={styles.userUniversity}>MIT • Verified</Text>
+                            </View>
                             <Text style={styles.walletAddress}>0x71C...9A23</Text>
                         </View>
                     </View>
 
                     <View style={styles.statsRow}>
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>4.9</Text>
-                            <Text style={styles.statLabel}>Rating</Text>
-                        </View>
-                        <View style={styles.statDivider} />
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>42</Text>
-                            <Text style={styles.statLabel}>Rides</Text>
-                        </View>
-                        <View style={styles.statDivider} />
-                        <View style={styles.statItem}>
-                            <Text style={styles.statValue}>15</Text>
-                            <Text style={styles.statLabel}>Driven</Text>
-                        </View>
+                        {[
+                            { value: '4.9', label: 'Rating', icon: '⭐' },
+                            { value: '42', label: 'Rides', icon: '🚗' },
+                            { value: '15', label: 'Driven', icon: '🏁' },
+                        ].map((stat, idx) => (
+                            <React.Fragment key={idx}>
+                                {idx > 0 && <View style={styles.statDivider} />}
+                                <View style={styles.statItem}>
+                                    <Text style={styles.statEmoji}>{stat.icon}</Text>
+                                    <Text style={styles.statValue}>{stat.value}</Text>
+                                    <Text style={styles.statLabel}>{stat.label}</Text>
+                                </View>
+                            </React.Fragment>
+                        ))}
                     </View>
                 </Card>
 
                 {/* Wallet Balance */}
-                <Card style={styles.walletCard} variant="highlight">
-                    <Text style={styles.walletLabel}>Campus Wallet Balance</Text>
-                    <View style={styles.walletBalance}>
-                        <Text style={styles.walletAmount}>1,240 CMP</Text>
-                        <Text style={styles.walletUSD}>≈ $42.15 USD</Text>
+                <Card style={styles.walletCard} variant="highlight" delay={200}>
+                    <View style={styles.walletRow}>
+                        <View>
+                            <Text style={styles.walletLabel}>Campus Wallet Balance</Text>
+                            <View style={styles.walletBalance}>
+                                <Text style={styles.walletAmount}>1,240 CMP</Text>
+                                <Text style={styles.walletUSD}>≈ $42.15</Text>
+                            </View>
+                        </View>
+                        <View style={styles.walletIconContainer}>
+                            <Text style={styles.walletIconEmoji}>💰</Text>
+                        </View>
                     </View>
                 </Card>
 
@@ -119,32 +136,38 @@ export default function ProfileScreen({ navigation }: Props) {
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Ride Preferences</Text>
                 </View>
-                <Card>
+                <Card delay={300}>
                     {[
                         { icon: '🎵', label: 'Music', value: 'Soft music' },
                         { icon: '💬', label: 'Chat', value: 'Minimal' },
                         { icon: '❄️', label: 'Temperature', value: 'Cool' },
                         { icon: '🐾', label: 'Pets', value: 'No pets' },
                     ].map((pref, idx) => (
-                        <View key={idx} style={[styles.prefItem, idx < 3 && styles.prefBorder]}>
-                            <Text style={styles.prefIcon}>{pref.icon}</Text>
+                        <TouchableOpacity key={idx} style={[styles.prefItem, idx < 3 && styles.prefBorder]}>
+                            <View style={styles.prefIconContainer}>
+                                <Text style={styles.prefIcon}>{pref.icon}</Text>
+                            </View>
                             <Text style={styles.prefLabel}>{pref.label}</Text>
                             <Text style={styles.prefValue}>{pref.value}</Text>
-                        </View>
+                            <Text style={styles.prefChevron}>›</Text>
+                        </TouchableOpacity>
                     ))}
                 </Card>
 
                 {/* Ride History */}
                 <View style={styles.sectionHeader}>
                     <Text style={styles.sectionTitle}>Ride History</Text>
-                    <TouchableOpacity>
+                    <TouchableOpacity style={styles.viewAllButton}>
                         <Text style={styles.viewAll}>View All ›</Text>
                     </TouchableOpacity>
                 </View>
 
-                {RIDE_HISTORY.map((ride) => (
-                    <Card key={ride.id} style={styles.historyCard}>
+                {RIDE_HISTORY.map((ride, idx) => (
+                    <Card key={ride.id} style={styles.historyCard} delay={400 + idx * 80}>
                         <View style={styles.historyRow}>
+                            <View style={styles.historyIconContainer}>
+                                <Text style={styles.historyIcon}>{ride.type === 'credit' ? '↓' : '↑'}</Text>
+                            </View>
                             <View style={styles.historyInfo}>
                                 <Text style={styles.historyDest}>{ride.destination}</Text>
                                 <Text style={styles.historyMeta}>{ride.date} • {ride.role}</Text>
@@ -171,6 +194,16 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background,
     },
+    glowOrb: {
+        position: 'absolute',
+        top: -50,
+        right: -50,
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        backgroundColor: Colors.accent,
+        opacity: 0.05,
+    },
     scrollView: {
         flex: 1,
     },
@@ -187,16 +220,19 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         color: Colors.textPrimary,
-        fontSize: FontSize.xxl,
-        fontWeight: FontWeight.bold,
+        fontSize: FontSize.xxxl,
+        fontWeight: FontWeight.heavy,
+        letterSpacing: -0.5,
     },
     editButton: {
-        width: 40,
-        height: 40,
-        borderRadius: 20,
+        width: 44,
+        height: 44,
+        borderRadius: 22,
         backgroundColor: Colors.surface,
         alignItems: 'center',
         justifyContent: 'center',
+        borderWidth: 1,
+        borderColor: Colors.border,
     },
     editIcon: {
         fontSize: 18,
@@ -209,6 +245,19 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: Spacing.xxl,
     },
+    avatarContainer: {
+        position: 'relative',
+        marginRight: Spacing.lg,
+    },
+    avatarGlow: {
+        position: 'absolute',
+        top: -5,
+        left: -5,
+        right: -5,
+        bottom: -5,
+        borderRadius: 37,
+        backgroundColor: Colors.accentGlow,
+    },
     avatar: {
         width: 64,
         height: 64,
@@ -216,12 +265,22 @@ const styles = StyleSheet.create({
         backgroundColor: Colors.accent,
         alignItems: 'center',
         justifyContent: 'center',
-        marginRight: Spacing.lg,
     },
     avatarText: {
         color: Colors.white,
         fontSize: FontSize.xxl,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
+    },
+    onlineDot: {
+        position: 'absolute',
+        bottom: 2,
+        right: 2,
+        width: 14,
+        height: 14,
+        borderRadius: 7,
+        backgroundColor: Colors.success,
+        borderWidth: 3,
+        borderColor: Colors.surfaceLight,
     },
     userInfo: {
         flex: 1,
@@ -229,12 +288,20 @@ const styles = StyleSheet.create({
     userName: {
         color: Colors.textPrimary,
         fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
+    },
+    verifiedBadge: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.xs,
+        marginTop: 3,
+    },
+    verifiedIcon: {
+        fontSize: 12,
     },
     userUniversity: {
         color: Colors.textSecondary,
         fontSize: FontSize.sm,
-        marginTop: 2,
     },
     walletAddress: {
         color: Colors.accent,
@@ -247,32 +314,41 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         paddingTop: Spacing.lg,
         borderTopWidth: 1,
-        borderTopColor: Colors.borderLight,
+        borderTopColor: Colors.border,
     },
     statItem: {
         flex: 1,
         alignItems: 'center',
     },
+    statEmoji: {
+        fontSize: 16,
+        marginBottom: 4,
+    },
     statValue: {
         color: Colors.textPrimary,
         fontSize: FontSize.xl,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
     },
     statLabel: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.xs,
         marginTop: 4,
     },
     statDivider: {
         width: 1,
-        height: 32,
+        height: 36,
         backgroundColor: Colors.border,
     },
     walletCard: {
         marginBottom: Spacing.xxl,
     },
+    walletRow: {
+        flexDirection: 'row',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+    },
     walletLabel: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.sm,
         marginBottom: Spacing.sm,
     },
@@ -284,11 +360,22 @@ const styles = StyleSheet.create({
     walletAmount: {
         color: Colors.accent,
         fontSize: FontSize.xxl,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
     },
     walletUSD: {
         color: Colors.textMuted,
         fontSize: FontSize.sm,
+    },
+    walletIconContainer: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: 'rgba(251, 191, 36, 0.12)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    walletIconEmoji: {
+        fontSize: 24,
     },
     sectionHeader: {
         flexDirection: 'row',
@@ -298,34 +385,56 @@ const styles = StyleSheet.create({
     },
     sectionTitle: {
         color: Colors.textPrimary,
-        fontSize: FontSize.lg,
+        fontSize: FontSize.xl,
         fontWeight: FontWeight.bold,
+    },
+    viewAllButton: {
+        backgroundColor: Colors.surfaceLight,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.sm,
+        borderRadius: BorderRadius.full,
     },
     viewAll: {
         color: Colors.accent,
         fontSize: FontSize.sm,
+        fontWeight: FontWeight.semibold,
     },
     prefItem: {
         flexDirection: 'row',
         alignItems: 'center',
-        paddingVertical: Spacing.md,
+        paddingVertical: Spacing.md + 2,
     },
     prefBorder: {
         borderBottomWidth: 1,
-        borderBottomColor: Colors.borderLight,
+        borderBottomColor: Colors.border,
+    },
+    prefIconContainer: {
+        width: 36,
+        height: 36,
+        borderRadius: 10,
+        backgroundColor: Colors.surfaceHighlight,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: Spacing.md,
     },
     prefIcon: {
         fontSize: 18,
-        marginRight: Spacing.md,
     },
     prefLabel: {
         color: Colors.textPrimary,
         fontSize: FontSize.md,
         flex: 1,
+        fontWeight: FontWeight.medium,
     },
     prefValue: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.sm,
+        marginRight: Spacing.sm,
+    },
+    prefChevron: {
+        color: Colors.textMuted,
+        fontSize: 20,
+        fontWeight: FontWeight.bold,
     },
     historyCard: {
         marginBottom: Spacing.sm,
@@ -333,6 +442,19 @@ const styles = StyleSheet.create({
     historyRow: {
         flexDirection: 'row',
         alignItems: 'center',
+    },
+    historyIconContainer: {
+        width: 40,
+        height: 40,
+        borderRadius: 12,
+        backgroundColor: Colors.surfaceHighlight,
+        alignItems: 'center',
+        justifyContent: 'center',
+        marginRight: Spacing.md,
+    },
+    historyIcon: {
+        fontSize: FontSize.lg,
+        color: Colors.textSecondary,
     },
     historyInfo: {
         flex: 1,
@@ -343,13 +465,13 @@ const styles = StyleSheet.create({
         fontWeight: FontWeight.medium,
     },
     historyMeta: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.xs,
         marginTop: 4,
     },
     historyAmount: {
         fontSize: FontSize.md,
-        fontWeight: FontWeight.semibold,
+        fontWeight: FontWeight.bold,
     },
     amountCredit: {
         color: Colors.success,

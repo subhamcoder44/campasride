@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useRef, useEffect } from 'react';
 import {
     View,
     Text,
@@ -6,8 +6,9 @@ import {
     TouchableOpacity,
     ScrollView,
     StatusBar,
+    Animated,
 } from 'react-native';
-import { Colors, FontSize, FontWeight, Spacing, BorderRadius } from '../../theme';
+import { Colors, FontSize, FontWeight, Spacing, BorderRadius, Shadows } from '../../theme';
 import Card from '../../components/Card';
 import Button from '../../components/Button';
 
@@ -17,9 +18,31 @@ interface Props {
 }
 
 export default function RideSummaryScreen({ navigation }: Props) {
+    const checkAnim = useRef(new Animated.Value(0)).current;
+    const checkBounce = useRef(new Animated.Value(0.3)).current;
+
+    useEffect(() => {
+        Animated.sequence([
+            Animated.spring(checkBounce, {
+                toValue: 1,
+                useNativeDriver: true,
+                speed: 6,
+                bounciness: 15,
+            }),
+            Animated.timing(checkAnim, {
+                toValue: 1,
+                duration: 400,
+                useNativeDriver: true,
+            }),
+        ]).start();
+    }, []);
+
     return (
         <View style={styles.container}>
             <StatusBar barStyle="light-content" backgroundColor={Colors.background} />
+
+            {/* Ambient glow */}
+            <View style={styles.glowOrb} />
 
             <ScrollView
                 contentContainerStyle={styles.scrollContent}
@@ -31,15 +54,24 @@ export default function RideSummaryScreen({ navigation }: Props) {
 
                 {/* Completion Badge */}
                 <View style={styles.completionBadge}>
-                    <Text style={styles.completionIcon}>✅</Text>
-                    <Text style={styles.completionText}>Ride Completed</Text>
-                    <Text style={styles.completionTime}>Duration: 15 minutes</Text>
+                    <Animated.View style={[styles.checkContainer, { transform: [{ scale: checkBounce }] }]}>
+                        <View style={styles.checkGlow} />
+                        <View style={styles.checkCircle}>
+                            <Text style={styles.completionIcon}>✓</Text>
+                        </View>
+                    </Animated.View>
+                    <Animated.View style={{ opacity: checkAnim }}>
+                        <Text style={styles.completionText}>Ride Completed</Text>
+                        <Text style={styles.completionTime}>Duration: 15 minutes</Text>
+                    </Animated.View>
                 </View>
 
                 {/* Route Summary */}
-                <Card style={styles.routeCard}>
+                <Card style={styles.routeCard} delay={200}>
                     <View style={styles.routeRow}>
-                        <View style={styles.dotGreen} />
+                        <View style={styles.dotGreen}>
+                            <View style={styles.dotGreenInner} />
+                        </View>
                         <View style={styles.routeInfo}>
                             <Text style={styles.routeLabel}>FROM</Text>
                             <Text style={styles.routeLocation}>Student Union</Text>
@@ -47,7 +79,9 @@ export default function RideSummaryScreen({ navigation }: Props) {
                     </View>
                     <View style={styles.routeDivider} />
                     <View style={styles.routeRow}>
-                        <View style={styles.dotRed} />
+                        <View style={styles.dotRed}>
+                            <View style={styles.dotRedInner} />
+                        </View>
                         <View style={styles.routeInfo}>
                             <Text style={styles.routeLabel}>TO</Text>
                             <Text style={styles.routeLocation}>North Campus Dorms</Text>
@@ -57,7 +91,7 @@ export default function RideSummaryScreen({ navigation }: Props) {
 
                 {/* Fare Breakdown */}
                 <Text style={styles.sectionTitle}>Fare Breakdown</Text>
-                <Card>
+                <Card delay={300}>
                     {[
                         { label: 'Base fare', value: '$3.00' },
                         { label: 'Distance (1.2 mi)', value: '$1.50' },
@@ -81,27 +115,33 @@ export default function RideSummaryScreen({ navigation }: Props) {
                 </Card>
 
                 {/* Settlement Info */}
-                <Card style={styles.settlementCard} variant="highlight">
+                <Card style={styles.settlementCard} variant="highlight" delay={400}>
                     <View style={styles.settlementRow}>
-                        <Text style={styles.settlementIcon}>🛡️</Text>
+                        <View style={styles.settlementIconContainer}>
+                            <Text style={styles.settlementIcon}>🛡️</Text>
+                        </View>
                         <View style={styles.settlementInfo}>
                             <Text style={styles.settlementTitle}>Smart Contract Settlement</Text>
                             <Text style={styles.settlementDesc}>
                                 Payment has been released from escrow and settled on-chain.
                             </Text>
-                            <Text style={styles.txHash}>Tx: 0x7a3f...c829</Text>
+                            <View style={styles.txHashBadge}>
+                                <Text style={styles.txHash}>Tx: 0x7a3f...c829</Text>
+                            </View>
                         </View>
                     </View>
                 </Card>
 
                 {/* Rate Driver */}
-                <Card style={styles.rateCard}>
+                <Card style={styles.rateCard} delay={500}>
                     <Text style={styles.rateTitle}>Rate your driver</Text>
                     <Text style={styles.rateName}>Alex M.</Text>
                     <View style={styles.stars}>
                         {[1, 2, 3, 4, 5].map((star) => (
-                            <TouchableOpacity key={star}>
-                                <Text style={styles.star}>{star <= 4 ? '⭐' : '☆'}</Text>
+                            <TouchableOpacity key={star} style={styles.starButton}>
+                                <Text style={[styles.star, star <= 4 && styles.starActive]}>
+                                    {star <= 4 ? '⭐' : '☆'}
+                                </Text>
                             </TouchableOpacity>
                         ))}
                     </View>
@@ -123,6 +163,16 @@ const styles = StyleSheet.create({
         flex: 1,
         backgroundColor: Colors.background,
     },
+    glowOrb: {
+        position: 'absolute',
+        top: -40,
+        left: '30%',
+        width: 200,
+        height: 200,
+        borderRadius: 100,
+        backgroundColor: Colors.success,
+        opacity: 0.06,
+    },
     scrollContent: {
         paddingHorizontal: Spacing.xl,
         paddingBottom: Spacing.xxxl,
@@ -133,27 +183,53 @@ const styles = StyleSheet.create({
     },
     headerTitle: {
         color: Colors.textPrimary,
-        fontSize: FontSize.xxl,
-        fontWeight: FontWeight.bold,
+        fontSize: FontSize.xxxl,
+        fontWeight: FontWeight.heavy,
         textAlign: 'center',
+        letterSpacing: -0.5,
     },
     completionBadge: {
         alignItems: 'center',
         marginBottom: Spacing.xxl,
     },
+    checkContainer: {
+        position: 'relative',
+        marginBottom: Spacing.lg,
+    },
+    checkGlow: {
+        position: 'absolute',
+        top: -12,
+        left: -12,
+        right: -12,
+        bottom: -12,
+        borderRadius: 48,
+        backgroundColor: Colors.successGlow,
+    },
+    checkCircle: {
+        width: 72,
+        height: 72,
+        borderRadius: 36,
+        backgroundColor: Colors.success,
+        alignItems: 'center',
+        justifyContent: 'center',
+        ...Shadows.glowSuccess,
+    },
     completionIcon: {
-        fontSize: 48,
-        marginBottom: Spacing.md,
+        color: Colors.white,
+        fontSize: 32,
+        fontWeight: FontWeight.bold,
     },
     completionText: {
         color: Colors.success,
-        fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
+        fontSize: FontSize.xl,
+        fontWeight: FontWeight.heavy,
+        textAlign: 'center',
     },
     completionTime: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.sm,
         marginTop: 4,
+        textAlign: 'center',
     },
     routeCard: {
         marginBottom: Spacing.xxl,
@@ -164,15 +240,31 @@ const styles = StyleSheet.create({
         gap: Spacing.md,
     },
     dotGreen: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: Colors.successLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dotGreenInner: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
         backgroundColor: Colors.success,
     },
     dotRed: {
-        width: 12,
-        height: 12,
-        borderRadius: 6,
+        width: 16,
+        height: 16,
+        borderRadius: 8,
+        backgroundColor: Colors.errorLight,
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
+    dotRedInner: {
+        width: 8,
+        height: 8,
+        borderRadius: 4,
         backgroundColor: Colors.error,
     },
     routeInfo: {},
@@ -180,24 +272,25 @@ const styles = StyleSheet.create({
         color: Colors.textMuted,
         fontSize: FontSize.xs,
         fontWeight: FontWeight.semibold,
-        letterSpacing: 1,
+        letterSpacing: 1.5,
     },
     routeLocation: {
         color: Colors.textPrimary,
         fontSize: FontSize.md,
-        fontWeight: FontWeight.medium,
+        fontWeight: FontWeight.semibold,
         marginTop: 2,
     },
     routeDivider: {
         width: 2,
         height: 24,
         backgroundColor: Colors.border,
-        marginLeft: 5,
+        marginLeft: 7,
         marginVertical: Spacing.sm,
+        borderRadius: 1,
     },
     sectionTitle: {
         color: Colors.textPrimary,
-        fontSize: FontSize.lg,
+        fontSize: FontSize.xl,
         fontWeight: FontWeight.bold,
         marginBottom: Spacing.md,
     },
@@ -206,7 +299,7 @@ const styles = StyleSheet.create({
         justifyContent: 'space-between',
         paddingVertical: Spacing.md,
         borderBottomWidth: 1,
-        borderBottomColor: Colors.borderLight,
+        borderBottomColor: Colors.border,
     },
     fareLabel: {
         color: Colors.textSecondary,
@@ -229,7 +322,7 @@ const styles = StyleSheet.create({
     totalLabel: {
         color: Colors.textPrimary,
         fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
     },
     totalValues: {
         alignItems: 'flex-end',
@@ -237,7 +330,7 @@ const styles = StyleSheet.create({
     totalETH: {
         color: Colors.accent,
         fontSize: FontSize.lg,
-        fontWeight: FontWeight.bold,
+        fontWeight: FontWeight.heavy,
     },
     totalUSD: {
         color: Colors.textSecondary,
@@ -251,8 +344,16 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: Spacing.md,
     },
+    settlementIconContainer: {
+        width: 44,
+        height: 44,
+        borderRadius: BorderRadius.lg,
+        backgroundColor: 'rgba(79, 142, 247, 0.12)',
+        alignItems: 'center',
+        justifyContent: 'center',
+    },
     settlementIcon: {
-        fontSize: 24,
+        fontSize: 22,
     },
     settlementInfo: {
         flex: 1,
@@ -268,24 +369,31 @@ const styles = StyleSheet.create({
         marginTop: 4,
         lineHeight: 20,
     },
+    txHashBadge: {
+        backgroundColor: Colors.surfaceHighlight,
+        paddingHorizontal: Spacing.md,
+        paddingVertical: Spacing.xs + 1,
+        borderRadius: BorderRadius.full,
+        alignSelf: 'flex-start',
+        marginTop: Spacing.sm,
+    },
     txHash: {
         color: Colors.accent,
         fontSize: FontSize.xs,
         fontFamily: 'monospace',
-        marginTop: Spacing.sm,
     },
     rateCard: {
         marginTop: Spacing.xxl,
         alignItems: 'center',
     },
     rateTitle: {
-        color: Colors.textSecondary,
+        color: Colors.textMuted,
         fontSize: FontSize.sm,
         marginBottom: Spacing.sm,
     },
     rateName: {
         color: Colors.textPrimary,
-        fontSize: FontSize.lg,
+        fontSize: FontSize.xl,
         fontWeight: FontWeight.bold,
         marginBottom: Spacing.md,
     },
@@ -293,9 +401,18 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         gap: Spacing.md,
     },
-    star: {
-        fontSize: 28,
+    starButton: {
+        width: 48,
+        height: 48,
+        borderRadius: 24,
+        backgroundColor: Colors.surfaceHighlight,
+        alignItems: 'center',
+        justifyContent: 'center',
     },
+    star: {
+        fontSize: 24,
+    },
+    starActive: {},
     doneButton: {
         marginTop: Spacing.xxl,
         width: '100%',
