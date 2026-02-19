@@ -9,7 +9,8 @@ import {
     Animated,
     View,
 } from 'react-native';
-import { Colors, BorderRadius, FontSize, FontWeight, Spacing, Shadows } from '../theme';
+import LinearGradient from 'react-native-linear-gradient';
+import { Colors, Gradients, BorderRadius, FontSize, FontWeight, Spacing, Shadows } from '../theme';
 
 interface ButtonProps {
     title: string;
@@ -20,7 +21,7 @@ interface ButtonProps {
     loading?: boolean;
     style?: ViewStyle;
     textStyle?: TextStyle;
-    icon?: string;
+    icon?: React.ReactNode;
 }
 
 export default function Button({
@@ -38,7 +39,7 @@ export default function Button({
 
     const handlePressIn = () => {
         Animated.spring(scaleAnim, {
-            toValue: 0.96,
+            toValue: 0.95,
             useNativeDriver: true,
             speed: 50,
             bounciness: 4,
@@ -49,49 +50,71 @@ export default function Button({
         Animated.spring(scaleAnim, {
             toValue: 1,
             useNativeDriver: true,
-            speed: 20,
-            bounciness: 8,
+            speed: 18,
+            bounciness: 10,
         }).start();
     };
 
-    const buttonStyles = [
-        styles.base,
-        styles[variant],
-        styles[`size_${size}`],
-        disabled && styles.disabled,
-        style,
-    ];
+    const sizeStyle = styles[`size_${size}`];
+    const labelSize = styles[`label_${size}`];
 
-    const labelStyles = [
-        styles.label,
-        styles[`label_${variant}`],
-        styles[`label_${size}`],
-        disabled && styles.labelDisabled,
-        textStyle,
-    ];
+    if (variant === 'primary') {
+        return (
+            <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, styles.primaryGlow, style]}>
+                <TouchableOpacity
+                    onPress={onPress}
+                    onPressIn={handlePressIn}
+                    onPressOut={handlePressOut}
+                    disabled={disabled || loading}
+                    activeOpacity={1}>
+                    <LinearGradient
+                        colors={disabled ? [Colors.surfaceHighlight, Colors.surfaceHighlight] : [...Gradients.primary]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 1 }}
+                        style={[styles.base, sizeStyle, disabled && styles.disabled]}>
+                        <View style={styles.shine} />
+                        {loading ? (
+                            <ActivityIndicator color={Colors.white} size="small" />
+                        ) : (
+                            <View style={styles.content}>
+                                {icon}
+                                <Text style={[styles.label, styles.label_primary, labelSize, textStyle]}>
+                                    {title}
+                                </Text>
+                            </View>
+                        )}
+                    </LinearGradient>
+                </TouchableOpacity>
+            </Animated.View>
+        );
+    }
 
     return (
-        <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, variant === 'primary' && styles.primaryGlow]}>
+        <Animated.View style={[{ transform: [{ scale: scaleAnim }] }, style]}>
             <TouchableOpacity
-                style={buttonStyles}
+                style={[
+                    styles.base,
+                    styles[variant],
+                    sizeStyle,
+                    disabled && styles.disabled,
+                ]}
                 onPress={onPress}
                 onPressIn={handlePressIn}
                 onPressOut={handlePressOut}
                 disabled={disabled || loading}
                 activeOpacity={1}>
-                {variant === 'primary' && (
-                    <View style={styles.primaryShine} />
-                )}
                 {loading ? (
                     <ActivityIndicator
-                        color={variant === 'primary' ? Colors.white : Colors.accent}
+                        color={variant === 'danger' ? Colors.error : Colors.accent}
                         size="small"
                     />
                 ) : (
-                    <>
-                        {icon && <Text style={[styles.icon, styles[`label_${variant}`]]}>{icon} </Text>}
-                        <Text style={labelStyles}>{title}</Text>
-                    </>
+                    <View style={styles.content}>
+                        {icon}
+                        <Text style={[styles.label, styles[`label_${variant}`], labelSize, textStyle]}>
+                            {title}
+                        </Text>
+                    </View>
                 )}
             </TouchableOpacity>
         </Animated.View>
@@ -106,20 +129,22 @@ const styles = StyleSheet.create({
         borderRadius: BorderRadius.lg,
         overflow: 'hidden',
     },
-    primary: {
-        backgroundColor: Colors.accent,
+    content: {
+        flexDirection: 'row',
+        alignItems: 'center',
+        gap: Spacing.sm,
     },
     primaryGlow: {
-        ...Shadows.glow,
         borderRadius: BorderRadius.lg,
+        ...Shadows.glow,
     },
-    primaryShine: {
+    shine: {
         position: 'absolute',
         top: 0,
         left: 0,
         right: 0,
-        height: '50%',
-        backgroundColor: 'rgba(255, 255, 255, 0.08)',
+        height: '45%',
+        backgroundColor: 'rgba(255, 255, 255, 0.07)',
         borderTopLeftRadius: BorderRadius.lg,
         borderTopRightRadius: BorderRadius.lg,
     },
@@ -134,26 +159,26 @@ const styles = StyleSheet.create({
     danger: {
         backgroundColor: Colors.errorLight,
         borderWidth: 1,
-        borderColor: 'rgba(248, 113, 113, 0.3)',
+        borderColor: 'rgba(255, 82, 82, 0.25)',
     },
     size_sm: {
-        paddingVertical: Spacing.sm + 2,
+        paddingVertical: Spacing.sm + 4,
         paddingHorizontal: Spacing.lg,
     },
     size_md: {
-        paddingVertical: Spacing.md + 2,
+        paddingVertical: Spacing.md + 4,
         paddingHorizontal: Spacing.xl,
     },
     size_lg: {
-        paddingVertical: Spacing.lg + 2,
+        paddingVertical: Spacing.lg + 4,
         paddingHorizontal: Spacing.xxl,
     },
     disabled: {
-        opacity: 0.4,
+        opacity: 0.35,
     },
     label: {
         fontWeight: FontWeight.semibold,
-        letterSpacing: 0.3,
+        letterSpacing: 0.4,
     },
     label_primary: {
         color: Colors.white,
@@ -175,11 +200,5 @@ const styles = StyleSheet.create({
     },
     label_lg: {
         fontSize: FontSize.lg,
-    },
-    labelDisabled: {
-        opacity: 0.7,
-    },
-    icon: {
-        fontSize: FontSize.md,
     },
 });

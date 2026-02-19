@@ -1,11 +1,13 @@
 import React, { useRef, useEffect } from 'react';
 import { View, Text, TouchableOpacity, StyleSheet, Animated } from 'react-native';
-import { Colors, FontSize, Spacing, Shadows, BorderRadius } from '../theme';
+import LinearGradient from 'react-native-linear-gradient';
+import Feather from 'react-native-vector-icons/Feather';
+import { Colors, Gradients, FontSize, FontWeight, Spacing, Shadows, BorderRadius } from '../theme';
 
 interface Tab {
     key: string;
     label: string;
-    icon: string;
+    icon: string; // Feather icon name
 }
 
 interface BottomTabBarProps {
@@ -17,62 +19,74 @@ interface BottomTabBarProps {
 export default function BottomTabBar({ tabs, activeTab, onTabPress }: BottomTabBarProps) {
     return (
         <View style={styles.container}>
-            {/* Frosted glass background */}
-            <View style={styles.glassBackground} />
+            <LinearGradient
+                colors={['rgba(5, 8, 15, 0.95)', 'rgba(5, 8, 15, 1)']}
+                style={styles.gradient}
+            />
+            <View style={styles.topBorder} />
             <View style={styles.tabRow}>
-                {tabs.map(tab => {
-                    const isActive = tab.key === activeTab;
-                    return (
-                        <TabItem
-                            key={tab.key}
-                            tab={tab}
-                            isActive={isActive}
-                            onPress={() => onTabPress(tab.key)}
-                        />
-                    );
-                })}
+                {tabs.map(tab => (
+                    <TabItem
+                        key={tab.key}
+                        tab={tab}
+                        isActive={tab.key === activeTab}
+                        onPress={() => onTabPress(tab.key)}
+                    />
+                ))}
             </View>
         </View>
     );
 }
 
 function TabItem({ tab, isActive, onPress }: { tab: Tab; isActive: boolean; onPress: () => void }) {
-    const scaleAnim = useRef(new Animated.Value(isActive ? 1 : 0.85)).current;
-    const glowOpacity = useRef(new Animated.Value(isActive ? 1 : 0)).current;
+    const scaleAnim = useRef(new Animated.Value(isActive ? 1.15 : 1)).current;
+    const translateY = useRef(new Animated.Value(isActive ? -2 : 0)).current;
 
     useEffect(() => {
         Animated.parallel([
             Animated.spring(scaleAnim, {
-                toValue: isActive ? 1.1 : 0.95,
+                toValue: isActive ? 1.15 : 1,
                 useNativeDriver: true,
-                speed: 20,
+                speed: 18,
+                bounciness: 12,
+            }),
+            Animated.spring(translateY, {
+                toValue: isActive ? -2 : 0,
+                useNativeDriver: true,
+                speed: 18,
                 bounciness: 8,
             }),
-            Animated.timing(glowOpacity, {
-                toValue: isActive ? 1 : 0,
-                duration: 250,
-                useNativeDriver: true,
-            }),
         ]).start();
-    }, [isActive, scaleAnim, glowOpacity]);
+    }, [isActive, scaleAnim, translateY]);
 
     return (
         <TouchableOpacity
             style={styles.tab}
             onPress={onPress}
             activeOpacity={0.7}>
-            {/* Active glow background */}
-            <Animated.View style={[styles.activeGlow, { opacity: glowOpacity }]} />
-            <Animated.View style={{ transform: [{ scale: scaleAnim }], alignItems: 'center' }}>
-                <Text style={[styles.icon, isActive && styles.iconActive]}>
-                    {tab.icon}
-                </Text>
+            {isActive && <View style={styles.activeGlow} />}
+            <Animated.View style={{
+                transform: [{ scale: scaleAnim }, { translateY }],
+                alignItems: 'center',
+            }}>
+                <Feather
+                    name={tab.icon}
+                    size={22}
+                    color={isActive ? Colors.accent : Colors.textMuted}
+                />
             </Animated.View>
             <Text style={[styles.label, isActive && styles.labelActive]}>
                 {tab.label}
             </Text>
             {isActive && (
-                <View style={styles.indicator} />
+                <View style={styles.indicator}>
+                    <LinearGradient
+                        colors={[...Gradients.primary]}
+                        start={{ x: 0, y: 0 }}
+                        end={{ x: 1, y: 0 }}
+                        style={styles.indicatorGradient}
+                    />
+                </View>
             )}
         </TouchableOpacity>
     );
@@ -81,18 +95,22 @@ function TabItem({ tab, isActive, onPress }: { tab: Tab; isActive: boolean; onPr
 const styles = StyleSheet.create({
     container: {
         position: 'relative',
-        overflow: 'hidden',
     },
-    glassBackground: {
+    gradient: {
         ...StyleSheet.absoluteFillObject,
-        backgroundColor: Colors.surface,
-        borderTopWidth: 1,
-        borderTopColor: 'rgba(255, 255, 255, 0.06)',
+    },
+    topBorder: {
+        position: 'absolute',
+        top: 0,
+        left: 0,
+        right: 0,
+        height: 1,
+        backgroundColor: 'rgba(255, 255, 255, 0.04)',
     },
     tabRow: {
         flexDirection: 'row',
-        paddingBottom: Spacing.md,
-        paddingTop: Spacing.sm,
+        paddingBottom: Spacing.md + 2,
+        paddingTop: Spacing.sm + 2,
     },
     tab: {
         flex: 1,
@@ -103,37 +121,33 @@ const styles = StyleSheet.create({
     },
     activeGlow: {
         position: 'absolute',
-        top: 0,
-        left: '20%',
-        right: '20%',
-        height: 32,
+        top: 4,
+        width: 40,
+        height: 40,
+        borderRadius: 20,
         backgroundColor: Colors.accentGlow,
-        borderRadius: 16,
-    },
-    icon: {
-        fontSize: 22,
-        marginBottom: 3,
-        opacity: 0.4,
-    },
-    iconActive: {
-        opacity: 1,
     },
     label: {
         fontSize: FontSize.xs,
         color: Colors.textMuted,
-        letterSpacing: 0.2,
+        marginTop: 4,
+        letterSpacing: 0.3,
+        fontWeight: FontWeight.medium,
     },
     labelActive: {
         color: Colors.accent,
-        fontWeight: '700',
+        fontWeight: FontWeight.bold,
     },
     indicator: {
         position: 'absolute',
         top: -1,
-        width: 28,
+        width: 24,
         height: 3,
         borderRadius: 1.5,
-        backgroundColor: Colors.accent,
-        ...Shadows.glow,
+        overflow: 'hidden',
+    },
+    indicatorGradient: {
+        flex: 1,
+        borderRadius: 1.5,
     },
 });
